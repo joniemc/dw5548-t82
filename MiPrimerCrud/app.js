@@ -4,7 +4,7 @@ const PORT = 3000;
 
 app.use(express.json());
 
-const users = [{nombre:"Jonie Miralda", edad: 30, correo: "jmiralda@unitec.edu"},{nombre:"Candido Amaya", edad: 24, correo: "candido.amaya@unitec.edu"}];
+let users = [{nombre:"Jonie Miralda", edad: 30, correo: "jmiralda@unitec.edu"},{nombre:"Candido Amaya", edad: 24, correo: "candido.amaya@unitec.edu"}];
 
 app.get("/user",(req, res)=>{
     res.status(200).json({status:200,message:"Success",data: users});
@@ -60,6 +60,19 @@ app.put("/user",(req, res)=>{
     }
 
 });
+
+app.delete("/user/:correo",(req, res)=>{
+    const correo = req.params.correo;
+    const filtroUsuario = users.filter(user => user.correo !== correo);
+
+    if(filtroUsuario.length !== users.length){
+        users = filtroUsuario;
+        res.status(200).json({status:200,message:"Registro eliminado exitosamente.."});
+    }else{
+        res.status(404).json({status:404,message:"Registro no encontrado.."});
+    }
+});
+
 app.listen(PORT, ()=>{
     console.log(`El servidor de express esta escuchando en http://localhost:${PORT}`);
 });
