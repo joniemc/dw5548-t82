@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "nombre": "MacBook Pro",
+        "marca": "Apple",
+        "fabricante": "Apple",
+        "categoria": "laptop"
+    },
+    {
+        "id": 2,
+        "nombre": "Latitude E5511",
+        "marca": "Dell",
+        "fabricante": "Dell",
+        "categoria": "laptop"
+    },
+    {
+        "id": 2,
+        "nombre": "Latitude E5511",
+        "marca": "Dell",
+        "fabricante": "Dell",
+        "categoria": "laptop"
+    }
+]
