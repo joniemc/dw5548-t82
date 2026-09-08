@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const PORT = 3000;
 const JWT_SECRET_KEY = 'MyHASH_SUPER_SECRRETO';
+
 const pool = mysql.createPool({
     host:'localhost',
     user: 'root',
@@ -22,14 +23,27 @@ pool.getConnection((error, conexion)=>{
 });
 
 const authMiddleware = (req, res, next)=>{
-    const authHeader = req.headers['token'];
-    console.log("Aqui el encabezado: ",authHeader);
+    const authHeader = req.headers['authorization'];
 
     if(!authHeader){
-        return res.status(401).json({status:401, message:"No autorizado..."});
+        return res.status(401).json({status:401, message:"No autorizado, el token es obligatorio.."});
     }
 
-    next();
+    if(!authHeader.startsWith('Bearer ')){
+        return res.status(401).json({status:401, message:"No autorizado, el token no cuenta con un formato valido.."});
+    }
+
+    const token = authHeader.split(' ')[1];    
+
+    jwt.verify(token, JWT_SECRET_KEY, (err, user)=>{
+        if(err){
+            return res.status(401).json({status:401, message:"No autorizado, token invalido.."});
+        }    
+
+        req.user = user;
+        next();
+    });
+
 }
 
 app.use(express.json());
@@ -102,11 +116,15 @@ app.get('/usuarios/:Username',authMiddleware, (req,res)=>{
     });
 });
 
-app.post('/usuarios', (req, res)=>{
+app.post('/usuarios',authMiddleware, async (req, res)=>{
     const usuario = req.body;
 
     const sql = "INSERT INTO Usuario (Username, Password, Estado, Correo) VALUES(?, ?,?,?)";
-    pool.query(sql,[usuario.Username,usuario.Password, usuario.Estado, usuario.Correo],(err, results)=>{
+
+    const saltRound = 10;
+    const hash = await bcrypt.hash(usuario.Password, saltRound);
+
+    pool.query(sql,[usuario.Username,hash, usuario.Estado, usuario.Correo],(err, results)=>{
         if(err){
             res.status(500).json({status:500, message:"Ocurrio un error en la ejecución de la consulta"});
         }else{
@@ -116,7 +134,7 @@ app.post('/usuarios', (req, res)=>{
     });
 });
 
-app.put('/usuarios/:Id', (req,res)=>{
+app.put('/usuarios/:Id',authMiddleware, (req,res)=>{
     const Id = req.params.Id;
     const usuario = req.body;
 
@@ -135,7 +153,7 @@ app.put('/usuarios/:Id', (req,res)=>{
     });
 });
 
-app.delete('/usuarios/:Id', (req,res)=>{
+app.delete('/usuarios/:Id',authMiddleware, (req,res)=>{
     const Id = req.params.Id;
 
     const sql = "DELETE FROM Usuario WHERE Id = ?";
